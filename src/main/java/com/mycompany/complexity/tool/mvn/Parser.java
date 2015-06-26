@@ -27,6 +27,7 @@ import com.mycompany.complexity.tool.mvn.Nodes.ForEachNode;
 import com.mycompany.complexity.tool.mvn.Nodes.ForNode;
 import com.mycompany.complexity.tool.mvn.Nodes.IfNode;
 import com.mycompany.complexity.tool.mvn.Nodes.LoopExitNode;
+import com.mycompany.complexity.tool.mvn.Nodes.LoopNode;
 import com.mycompany.complexity.tool.mvn.Nodes.Node;
 import static com.mycompany.complexity.tool.mvn.Nodes.Node.NodeType.BLOCK;
 import static com.mycompany.complexity.tool.mvn.Nodes.Node.NodeType.CASE;
@@ -138,8 +139,18 @@ public class Parser {
 
     }
 
-    private void processBreakNodes(Node exitNode, Node processLimitNode) {
+    private Node checkExitNode(Node exitNode) {
+        if (exitNode.getClass().equals(ForNode.class)
+                || (exitNode.getClass().equals(WhileNode.class))
+                || (exitNode.getClass().equals(ForEachNode.class))) {
+            LoopNode node = (LoopNode) exitNode;
+            return node.getExitNode();
+        }
+        return exitNode;
+    }
 
+    private void processBreakNodes(Node exitNode, Node processLimitNode) {
+        exitNode = checkExitNode(exitNode);
         while (breakNodes.size() > 0) {
             Node breakNode = breakNodes.pop();
             Node caseParent = getCaseParent(breakNode);
@@ -182,6 +193,7 @@ public class Parser {
     }
 
     private Node getCaseParent(Node node) {
+        Node initialNode = node;
         while (node.getParent() != null) {
             Node parent = node.getParent();
             if (parent.getType().equals(Node.NodeType.CASE)) {
@@ -190,7 +202,7 @@ public class Parser {
                 node = parent;
             }
         }
-        return node;
+        return initialNode;
     }
 
     private void removeAllCaseConnections(Node node, Node rootCaller, Node nextCase) {
@@ -434,7 +446,7 @@ public class Parser {
             }
             Node right = node.getRight();
 
-            if (right != null && !right.equals(rootCaller.getRight()) && !right.equals(limitNode)) {
+            if (right != null && !right.equals(limitNode)) {
                 if (right.getId() > node.getId()) {         // prevent stack overflow on going back on the "tree"
                     ifNodes = getIFNodesWithoutRightWithLimit(right, ifNodes, rootCaller, limitNode);
                 }
@@ -759,13 +771,6 @@ public class Parser {
                         auxNode = parse(stmt2, actualNode, "");
                     }
                     if (auxNode != null) {
-                        if (auxNode.getType().equals(Node.NodeType.DO)) {
-                            DoNode doNode = (DoNode) auxNode;
-                            performIfandLeavesConnections(actualNode, doNode.getRootNode());
-                        } else {
-                            performIfandLeavesConnections(actualNode, auxNode);
-                        }
-
                         if (auxNode.getClass().equals(BreakNode.class)) {
                             if (breakScope.size() > 0) {
                                 breakNodes.push(breakScope.lastElement());
@@ -773,6 +778,12 @@ public class Parser {
                         } else if (auxNode.getClass().equals(ReturnNode.class)) {
                             hasReturn = true;
                         } else {
+                            if (auxNode.getType().equals(Node.NodeType.DO)) {
+                                DoNode doNode = (DoNode) auxNode;
+                                performIfandLeavesConnections(actualNode, doNode.getRootNode());
+                            } else {
+                                performIfandLeavesConnections(actualNode, auxNode);
+                            }
                             actualNode = auxNode;
                         }
 
@@ -858,18 +869,19 @@ public class Parser {
     private void connectInnerLoopNodes(Node topNodeFromBreakNodes, Node target) {
         if (!breakNodes.empty()) {
             Node breakNode = breakNodes.lastElement();
-
-            while (breakNode != topNodeFromBreakNodes) {
-                breakNode.setLeft(target);
-                breakNode.setRight(null);
+            if (breakNode.getType() != Node.NodeType.CASE && !Node.isLoopNode(target)) {
+                while (breakNode != topNodeFromBreakNodes) {
+                    breakNode.setLeft(target);
+                    breakNode.setRight(null);
 //                System.out.println("Aplicando a regra para : " + breakNode.getId());
-                breakNodes.pop();
-                if (!breakNodes.empty()) {
-                    breakNode = breakNodes.lastElement();
-                } else {
-                    breakNode = null;
-                }
+                    breakNodes.pop();
+                    if (!breakNodes.empty()) {
+                        breakNode = breakNodes.lastElement();
+                    } else {
+                        breakNode = null;
+                    }
 
+                }
             }
         }
     }
@@ -879,7 +891,7 @@ public class Parser {
         return parseLoop(whileNode, whilestmt.getBody());
     }
 
-    private Node parseLoop(Node node, Statement nodeBody) {
+    private Node parseLoop(LoopNode node, Statement nodeBody) {
         System.out.println("loopNode id: " + node.getId());
         Node topNodeFromBreakNodes = null;
         if (!breakNodes.empty()) {
@@ -888,7 +900,7 @@ public class Parser {
 
         Node nodeChild = parse(nodeBody, node, "left");
         Node exitNode = instanciateExitNode(node);
-
+        node.setExitNode(exitNode);
         performIfandLeavesConnections(nodeChild, exitNode);
         connectInnerLoopNodes(topNodeFromBreakNodes, node);
 

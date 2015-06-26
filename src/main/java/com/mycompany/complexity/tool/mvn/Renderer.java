@@ -2,6 +2,7 @@ package com.mycompany.complexity.tool.mvn;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.mycompany.complexity.tool.mvn.Nodes.Edge;
+import com.mycompany.complexity.tool.mvn.Nodes.IfNode;
 import com.mycompany.complexity.tool.mvn.Nodes.Node;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Tree;
@@ -51,7 +52,7 @@ public class Renderer {
         this.parser = parser;
         lastEdgeId = 0;
         g.addVertex(1);
-
+        
 //        renderLoopNodes();
         constructGraph(parser.getRoot());
         visualizeGraph(code);
@@ -188,8 +189,16 @@ public class Renderer {
 //                        BalloonTipStyle edgedLook = new EdgedBalloonStyle(Color.WHITE, Color.BLUE);
 //                        balloonTip = new BalloonTip(vv,textArea,edgedLook,true);
                         statementDisplayArea.setText(selectedNode.getStatementText());
-                        int line = (selectedNode.getBaseStatement().getBeginLine() - method.getBeginLine()) ;
-                        int finalLine = selectedNode.getBaseStatement().getEndLine()-method.getBeginLine();
+                        int line = 0;
+                        int finalLine = 0;
+                        if(selectedNode.getBaseStatement()!=null){
+                            line = selectedNode.getBaseStatement().getBeginLine() - method.getBeginLine() ;
+                            finalLine = selectedNode.getBaseStatement().getEndLine()-method.getBeginLine();
+                        }else if(selectedNode.getType().equals(Node.NodeType.IF)){
+                            IfNode node = (IfNode) selectedNode;
+                            line = node.getCondition().getBeginLine() - method.getBeginLine();
+                            finalLine = node.getCondition().getEndLine()-method.getBeginLine();
+                        }
                         
                         if(selectedNode.getType().equals(Node.NodeType.BLOCK)){
                              selectCodeAreaLines(codeArea, line+1, finalLine-1);
@@ -269,7 +278,7 @@ public class Renderer {
         Transformer<Edge, Stroke> edgeStroke = new Transformer<Edge, Stroke>() {
             public Stroke transform(Edge edge) {
                 if (Edge.contains(edge, path)) {
-                    return new BasicStroke(2.0f);
+                    return new BasicStroke(4.0f);
                 } else {
                     return new BasicStroke();
                 }

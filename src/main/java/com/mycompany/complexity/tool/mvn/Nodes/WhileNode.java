@@ -12,8 +12,10 @@ import com.github.javaparser.ast.stmt.WhileStmt;
  *
  * @author helenocampos
  */
-public class WhileNode extends Node {
+public class WhileNode extends LoopNode {
 
+    
+    
     public WhileNode(int id, Node.NodeType type, Statement statement) {
         super(id, type, statement);
     }
@@ -23,4 +25,5 @@ public class WhileNode extends Node {
 
         return whilestmt.getCondition().toString();
     }
+
 }

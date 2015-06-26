@@ -11,43 +11,24 @@ import com.github.javaparser.ast.stmt.Statement;
  *
  * @author Heleno
  */
-public class LoopNode {
+public abstract class LoopNode extends Node{
 
-    private Node source;
-    private Node destination;
+    private Node exitNode;
 
-    public LoopNode(Node source, Node destination) {
-        this.source = source;
-        this.destination = destination;
+    public LoopNode(int id, NodeType nodeType, Statement statement){
+        super(id, nodeType, statement);
+    }
+    
+    public Node getExitNode() {
+        return exitNode;
     }
 
-    /**
-     * @return the source
-     */
-    public Node getSource() {
-        return source;
+    public void setExitNode(Node exitNode) {
+        this.exitNode = exitNode;
     }
+    
 
-    /**
-     * @param source the source to set
-     */
-    public void setSource(Node source) {
-        this.source = source;
-    }
-
-    /**
-     * @return the destination
-     */
-    public Node getDestination() {
-        return destination;
-    }
-
-    /**
-     * @param destination the destination to set
-     */
-    public void setDestination(Node destination) {
-        this.destination = destination;
-    }
+    
     
    
     

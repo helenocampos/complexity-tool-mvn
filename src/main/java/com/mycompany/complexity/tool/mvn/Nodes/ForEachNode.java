@@ -12,11 +12,10 @@ import com.github.javaparser.ast.stmt.Statement;
  *
  * @author Heleno
  */
-public class ForEachNode extends Node {
+public class ForEachNode extends LoopNode {
 
     private ForeachStmt forstmt;
-    private Node exitNode;
-
+    
     public ForEachNode(int id, Node.NodeType type, Statement statement) {
         super(id, type, statement);
     }
@@ -33,14 +32,6 @@ public class ForEachNode extends Node {
      */
     public void setForstmt(ForeachStmt forstmt) {
         this.forstmt = forstmt;
-    }
-
-    public Node getExitNode() {
-        return exitNode;
-    }
-
-    public void setExitNode(Node exitNode) {
-        this.exitNode = exitNode;
     }
 
     public String getPredicateText() {

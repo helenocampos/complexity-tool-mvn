@@ -12,15 +12,14 @@ import com.github.javaparser.ast.stmt.Statement;
  *
  * @author Heleno
  */
-public class ForNode extends Node{
-    
-    private ForStmt forstmt;
-    private Node exitNode;
+public class ForNode extends LoopNode {
 
-    
-    public ForNode(int id, Node.NodeType type,Statement statement) {
+    private ForStmt forstmt;
+
+    public ForNode(int id, Node.NodeType type, Statement statement) {
         super(id, type, statement);
     }
+
     /**
      * @return the forstmt
      */
@@ -35,17 +34,8 @@ public class ForNode extends Node{
         this.forstmt = forstmt;
     }
 
-    public Node getExitNode() {
-        return exitNode;
+    public String getPredicateText() {
+        return getForstmt().getCompare().toString();
     }
 
-    public void setExitNode(Node exitNode) {
-        this.exitNode = exitNode;
-    }
-    
-      public String getPredicateText(){
-          return forstmt.getCompare().toString();
-      }
-    
-    
 }
