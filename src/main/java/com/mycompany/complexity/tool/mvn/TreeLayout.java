@@ -9,6 +9,7 @@
  */
 package com.mycompany.complexity.tool.mvn;
 
+import com.mycompany.complexity.tool.mvn.Nodes.Node;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -39,6 +40,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
     protected Dimension size = new Dimension(600, 600);
     protected Forest<V, E> graph;
     protected Map<V, Integer> basePositions = new HashMap<V, Integer>();
+    protected List<Node> nodeList = new ArrayList<>();
 
     protected Map<V, Point2D> locations
             = LazyMap.decorate(new HashMap<V, Point2D>(),
@@ -76,22 +78,22 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
      * Creates an instance for the specified graph with default X and Y
      * distances.
      */
-    public TreeLayout(Forest<V, E> g) {
-        this(g, DEFAULT_DISTX, DEFAULT_DISTY);
+    public TreeLayout(Forest<V, E> g, List<Node> list) {
+        this(g, DEFAULT_DISTX, DEFAULT_DISTY, list);
     }
 
     /**
      * Creates an instance for the specified graph and X distance with default Y
      * distance.
      */
-    public TreeLayout(Forest<V, E> g, int distx) {
-        this(g, distx, DEFAULT_DISTY);
+    public TreeLayout(Forest<V, E> g, int distx, List<Node> list) {
+        this(g, distx, DEFAULT_DISTY, list);
     }
 
     /**
      * Creates an instance for the specified graph, X distance, and Y distance.
      */
-    public TreeLayout(Forest<V, E> g, int distx, int disty) {
+    public TreeLayout(Forest<V, E> g, int distx, int disty, List<Node> list) {
         if (g == null) {
             throw new IllegalArgumentException("Graph must be non-null");
         }
@@ -101,34 +103,48 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
         this.graph = g;
         this.distX = distx;
         this.distY = disty;
+        this.nodeList = list;
         buildTree();
     }
 
     protected void buildTree() {
-        this.m_currentPoint = new Point(0, 20);
+        this.m_currentPoint = new Point(size.width / 2, 20);
+        int maxNumberOfParents=0;
         Collection<V> roots = TreeUtils.getRoots(graph);
         if (roots.size() > 0 && graph != null) {
             calculateDimensionX(roots);
+            for(V v : graph.getVertices()){
+                int temp = graph.inDegree(v);
+                if(temp > maxNumberOfParents){
+                    maxNumberOfParents = temp;
+                }
+            }
             for (V v : roots) {
                 calculateDimensionX(v);
-                m_currentPoint.x += this.basePositions.get(v) / 2 + this.distX;
-                buildTree(v, this.m_currentPoint.x);
+                //m_currentPoint.x += this.basePositions.get(v) / 2 + this.distX;
+                buildTree(v, null, this.m_currentPoint.x, maxNumberOfParents);
             }
-        }
-        int width = 0;
-        for (V v : roots) {
-            width += basePositions.get(v);
         }
     }
 
-    protected void buildTree(V v, int x) {
-
+    protected void buildTree(V v, V previousV, int x, int max) {
         if (!alreadyDone.contains(v)) {
+            int numberOfParents;
+            double distancePercent;
             alreadyDone.add(v);
-
             //go one level further down
             this.m_currentPoint.y += this.distY;
-            this.m_currentPoint.x = x;
+            if (previousV != null) {
+                
+                numberOfParents = Node.getNumberOfParents(nodeList, Node.getNode(nodeList, (Integer) v));
+                distancePercent = (double) numberOfParents/max;
+                if(distancePercent > 0){
+                    this.m_currentPoint.x = (int) (locations.get(previousV).getX() + ((size.width - locations.get(previousV).getX()) * distancePercent));
+                } else{
+                    this.m_currentPoint.x = (int) (locations.get(previousV).getX() + ((locations.get(previousV).getX()) * distancePercent)) + 10;
+                }
+            }
+            //this.m_currentPoint.x = x;
 
             this.setCurrentPositionFor(v);
 
@@ -144,7 +160,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
             for (V element : sucessorsList) {
                 sizeXofChild = this.basePositions.get(element);
                 startXofChild = lastX + sizeXofChild / 2;
-                buildTree(element, startXofChild);
+                buildTree(element, v, startXofChild, max);
                 lastX = lastX + sizeXofChild + distX;
             }
             this.m_currentPoint.y -= this.distY;

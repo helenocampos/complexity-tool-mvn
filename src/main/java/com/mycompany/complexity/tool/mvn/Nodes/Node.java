@@ -224,5 +224,21 @@ public class  Node {
         }
         return null;
     }
+    
+    //Counts the number of parents couting +1 if child Node is right and -1 if child Node is left
+    public static int getNumberOfParents(List<Node> nodes, Node actual){
+        int numberOfParents=0;
+        Iterator<Node> nodesIterator = nodes.listIterator();
+        while(nodesIterator.hasNext()){
+            Node node = nodesIterator.next();
+            if(node.getLeft() != null && node.getLeft().equals(actual)){
+                numberOfParents--;
+            } 
+            if(node.getRight()!= null && node.getRight().equals(actual)){
+                numberOfParents++;
+            }
+        }
+        return numberOfParents;
+    }
 
 }
