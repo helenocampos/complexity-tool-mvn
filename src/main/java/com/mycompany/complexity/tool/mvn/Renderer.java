@@ -4,13 +4,14 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.mycompany.complexity.tool.mvn.Nodes.Edge;
 import com.mycompany.complexity.tool.mvn.Nodes.IfNode;
 import com.mycompany.complexity.tool.mvn.Nodes.Node;
-import edu.uci.ics.jung.algorithms.layout.ISOMLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Tree;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
+import edu.uci.ics.jung.visualization.control.ScalingControl;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.picking.PickedState;
@@ -83,8 +84,12 @@ public class Renderer {
     }
 
     public VisualizationViewer<Integer, Edge> renderGraph(final JTextArea codeArea, final JTextArea statementDisplayArea, final MethodDeclaration method) {
-        
-        Layout<Integer, Edge> layout = new TreeLayout<>(g, parser.getNodes());
+        Layout<Integer, Edge> layout;
+        if (parser.getNodes().size() > 15) {
+            layout = new TreeLayoutDois<>(g);
+        } else {
+            layout = new TreeLayout(g, parser.getNodes());
+        }
 
         vv = new VisualizationViewer<Integer, Edge>(layout);
 
@@ -96,10 +101,11 @@ public class Renderer {
         gm.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 
         vv.setGraphMouse(gm);
-
+        
         vv.addKeyListener(gm.getModeKeyListener());
 
         final PickedState<Integer> pickedState = vv.getPickedVertexState();
+        vv.scaleToLayout(new CrossoverScalingControl());
         
         pickedState.addItemListener(new ItemListener() {
 
@@ -114,23 +120,22 @@ public class Renderer {
                         statementDisplayArea.setText(selectedNode.getStatementText());
                         int line = 0;
                         int finalLine = 0;
-                        if(selectedNode.getBaseStatement()!=null){
-                            line = selectedNode.getBaseStatement().getBeginLine() - method.getBeginLine() ;
-                            finalLine = selectedNode.getBaseStatement().getEndLine()-method.getBeginLine();
-                        }else if(selectedNode.getType().equals(Node.NodeType.IF)){
+                        if (selectedNode.getBaseStatement() != null) {
+                            line = selectedNode.getBaseStatement().getBeginLine() - method.getBeginLine();
+                            finalLine = selectedNode.getBaseStatement().getEndLine() - method.getBeginLine();
+                        } else if (selectedNode.getType().equals(Node.NodeType.IF)) {
                             IfNode node = (IfNode) selectedNode;
                             line = node.getCondition().getBeginLine() - method.getBeginLine();
-                            finalLine = node.getCondition().getEndLine()-method.getBeginLine();
+                            finalLine = node.getCondition().getEndLine() - method.getBeginLine();
                         }
-                        
-                        if(selectedNode.getType().equals(Node.NodeType.BLOCK)){
-                             selectCodeAreaLines(codeArea, line+1, finalLine-1);
-                        }else if(selectedNode.getType().equals(Node.NodeType.LOOP_EXIT)){
-                           selectCodeAreaLines(codeArea,finalLine,finalLine);
-                        }else{
+
+                        if (selectedNode.getType().equals(Node.NodeType.BLOCK)) {
+                            selectCodeAreaLines(codeArea, line + 1, finalLine - 1);
+                        } else if (selectedNode.getType().equals(Node.NodeType.LOOP_EXIT)) {
+                            selectCodeAreaLines(codeArea, finalLine, finalLine);
+                        } else {
                             selectCodeAreaLines(codeArea, line, finalLine);
                         }
-                       
 
                     } else {
                         vv.getRenderContext().setVertexStrokeTransformer(new ConstantTransformer(new BasicStroke()));
@@ -201,7 +206,7 @@ public class Renderer {
         Transformer<Edge, Stroke> edgeStroke = new Transformer<Edge, Stroke>() {
             public Stroke transform(Edge edge) {
                 if (Edge.contains(edge, path)) {
-                    return new BasicStroke(2.0f);
+                    return new BasicStroke(4.0f);
                 } else {
                     return new BasicStroke();
                 }

@@ -11,7 +11,7 @@ import java.util.Stack;
  *
  * @author helenocampos
  */
-public class Edge {
+public class Edge{
 
     private int id;
     private Node sourceNode;
@@ -59,4 +59,6 @@ public class Edge {
         }
         return false;
     }
+
+   
 }
