@@ -11,7 +11,6 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
-import edu.uci.ics.jung.visualization.control.ScalingControl;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.picking.PickedState;
@@ -40,14 +39,14 @@ public class Renderer {
 
     private int lastEdgeId;
     private Parser parser;
-    private Tree<Integer, Edge> g = new DelegateTree<>();
-    private VisualizationViewer<Integer, Edge> vv;
+    private Tree<Node, Edge> g = new DelegateTree<>();
+    private VisualizationViewer<Node, Edge> vv;
     private Node selectedNode;
 
     public Renderer(Parser parser) {
         this.parser = parser;
         lastEdgeId = 0;
-        g.addVertex(1);
+//        g.addVertex(1);
         constructGraph(parser.getRoot());
     }
 
@@ -58,12 +57,12 @@ public class Renderer {
 
             if (actualNode.getLeft() != null) {
                 Edge edge = new Edge(lastEdgeId++, actualNode, actualNode.getLeft());
-                g.addEdge(edge, actualNode.getId(), actualNode.getLeft().getId(), EdgeType.DIRECTED);
+                g.addEdge(edge, actualNode, actualNode.getLeft(), EdgeType.DIRECTED);
             }
 
             if (actualNode.getRight() != null) {
                 Edge edge = new Edge(lastEdgeId++, actualNode, actualNode.getRight());
-                g.addEdge(edge, actualNode.getId(), actualNode.getRight().getId(), EdgeType.DIRECTED);
+                g.addEdge(edge, actualNode, actualNode.getRight(), EdgeType.DIRECTED);
 
             }
 
@@ -83,17 +82,17 @@ public class Renderer {
         }
     }
 
-    public VisualizationViewer<Integer, Edge> renderGraph(final JTextArea codeArea, final JTextArea statementDisplayArea, final MethodDeclaration method) {
-        Layout<Integer, Edge> layout;
+    public VisualizationViewer<Node, Edge> renderGraph(final JTextArea codeArea, final JTextArea statementDisplayArea, final MethodDeclaration method) {
+        Layout<Node, Edge> layout;
         if (parser.getNodes().size() > 15) {
-            layout = new TreeLayoutDois<>(g);
+            layout = new TreeLayoutDois(g);
         } else {
             layout = new TreeLayout(g, parser.getNodes());
         }
 
-        vv = new VisualizationViewer<Integer, Edge>(layout);
+        vv = new VisualizationViewer<Node, Edge>(layout);
 
-        vv.getRenderContext().setEdgeShapeTransformer(new EdgeShape.QuadCurve<Integer, Edge>());
+        vv.getRenderContext().setEdgeShapeTransformer(new EdgeShape.QuadCurve<Node, Edge>());
         vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller());
 
         DefaultModalGraphMouse gm = new DefaultModalGraphMouse();
@@ -104,7 +103,7 @@ public class Renderer {
         
         vv.addKeyListener(gm.getModeKeyListener());
 
-        final PickedState<Integer> pickedState = vv.getPickedVertexState();
+        final PickedState<Node> pickedState = vv.getPickedVertexState();
         vv.scaleToLayout(new CrossoverScalingControl());
         
         pickedState.addItemListener(new ItemListener() {
@@ -112,11 +111,12 @@ public class Renderer {
             @Override
             public void itemStateChanged(ItemEvent e) {
                 Object subject = e.getItem();
-                if (subject instanceof Integer) {
-                    Integer vertex = (Integer) subject;
+                if (subject instanceof Node) {
+                    Node vertex = (Node) subject;
                     if (pickedState.isPicked(vertex)) {
                         setSelectedVertexStroke(vertex);
-                        selectedNode = Node.getNode(parser.getNodes(), vertex);
+                        selectedNode = vertex;
+                        
                         statementDisplayArea.setText(selectedNode.getStatementText());
                         int line = 0;
                         int finalLine = 0;
@@ -163,9 +163,9 @@ public class Renderer {
         }
     }
 
-    public void setSelectedVertexStroke(final int vertex) {
-        Transformer<Integer, Stroke> vertexStroke = new Transformer<Integer, Stroke>() {
-            public Stroke transform(Integer i) {
+    public void setSelectedVertexStroke(final Node vertex) {
+        Transformer<Node, Stroke> vertexStroke = new Transformer<Node, Stroke>() {
+            public Stroke transform(Node i) {
                 if (i == vertex) {
                     return new BasicStroke(3.0f);
                 } else {
@@ -179,11 +179,11 @@ public class Renderer {
     }
 
     public void fillPath(final Stack<Node> path) {
-        Transformer<Integer, Paint> vertexPaint
-                = new Transformer<Integer, Paint>() {
+        Transformer<Node, Paint> vertexPaint
+                = new Transformer<Node, Paint>() {
                     @Override
-                    public Paint transform(Integer i) {
-                        if (Node.contains(path, i)) {
+                    public Paint transform(Node i) {
+                        if (Node.contains(path, i.getId())) {
                             return Color.BLUE;
                         } else {
                             return Color.RED;
@@ -224,7 +224,7 @@ public class Renderer {
                 .setVertexFillPaintTransformer(vertexPaint);
     }
 
-    public VisualizationViewer<Integer, Edge> getVisualizationViewer() {
+    public VisualizationViewer<Node, Edge> getVisualizationViewer() {
         return this.vv;
     }
 
