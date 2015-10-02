@@ -152,13 +152,15 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
             double distancePercent;
             alreadyDone.add(v);
             //go one level further down
-            if (nodeList.size() == (Integer) v) {
+            Node actualNode = null;
+            actualNode = (Node) v;
+            if (nodeList.size() == actualNode.getId()) {
                 this.m_currentPoint.y = this.m_currentPoint.y + maxHeight;
             } else {
                 this.m_currentPoint.y = this.m_currentPoint.y + this.distY;
             }
             if (previousV != null) {
-                numberOfParents = Node.getNumberOfParents(nodeList, Node.getNode(nodeList, (Integer) v));
+                numberOfParents = Node.getNumberOfParents(nodeList, Node.getNode(nodeList, actualNode.getId()));
                 distancePercent = (double) numberOfParents / max;
                 if (distancePercent > 0) {
                     this.m_currentPoint.x = (int) (locations.get(previousV).getX() + ((size.width - locations.get(previousV).getX()) * distancePercent));
@@ -184,7 +186,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
                 buildTree(element, v, firstV, startXofChild, max);
                 lastX = lastX + sizeXofChild + distX;
             }
-            if (nodeList.size() == (Integer) v) {
+            if (nodeList.size() == actualNode.getId()) {
                 this.m_currentPoint.y -= maxHeight;
             } else {
                 this.m_currentPoint.y -= this.distY;
