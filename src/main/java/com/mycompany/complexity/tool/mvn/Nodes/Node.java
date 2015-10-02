@@ -15,7 +15,7 @@ import java.util.Stack;
  *
  * @author helenocampos
  */
-public class  Node {
+public class Node implements Comparable {
 
     private int id;
     private Node left;
@@ -45,9 +45,9 @@ public class  Node {
     public Statement getBaseStatement() {
         return baseStatement;
     }
-    
-    public String getStatementText(){
-        if(this.type.equals(this.type.EXIT)){
+
+    public String getStatementText() {
+        if (this.type.equals(this.type.EXIT)) {
             return "Exit Node";
         }
         String wholeStatement = this.baseStatement.toStringWithoutComments();
@@ -64,6 +64,19 @@ public class  Node {
 
     public void setHasBreak(boolean hasBreak) {
         this.hasBreak = hasBreak;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        if (o instanceof Node) {
+            Node node = (Node) o;
+            if (this.id > node.getId()) {
+                return 1;
+            } else if (this.id < node.getId()) {
+                return -1;
+            }
+        }
+        return 0;
     }
 
     public enum NodeType {
@@ -165,76 +178,76 @@ public class  Node {
     public void setParent(Node parent) {
         this.parent = parent;
     }
-    
-    public static boolean isChild(Node parent, Node node){
-        while(parent!=null){
-            if(node.getParent().equals(parent)){
+
+    public static boolean isChild(Node parent, Node node) {
+        while (parent != null) {
+            if (node.getParent().equals(parent)) {
                 return true;
-            }else{
+            } else {
                 parent = node.getParent();
             }
         }
         return false;
     }
-    
-    public static boolean isPredicate(Node node){
-        if(node!=null){
-            switch(node.getType()){
+
+    public static boolean isPredicate(Node node) {
+        if (node != null) {
+            switch (node.getType()) {
                 case CASE:
                 case IF:
                 case WHILE:
                 case DO:
                 case FOR:
                 case FOREACH:
-                return true;
+                    return true;
             }
             return false;
-        }else{
+        } else {
             return false;
         }
     }
-    
+
     public static boolean isLoopNode(Node node) {
         String className = node.getClass().getSimpleName();
         List<String> classes = Arrays.asList("WhileNode", "ForNode", "DoNode", "ForEachNode");
         return classes.contains(className);
 
     }
-    
-    public static boolean contains(Stack<Node> nodes, int id){
-        for(Node node: nodes){
-            if(node.getId() == id){
+
+    public static boolean contains(Stack<Node> nodes, int id) {
+        for (Node node : nodes) {
+            if (node.getId() == id) {
                 return true;
             }
         }
         return false;
     }
-    
-    public String getPredicateText(){
+
+    public String getPredicateText() {
         return baseStatement.toStringWithoutComments();
     }
-    
-    public static Node getNextNode(Stack<Node> nodes, Node targetNode){
+
+    public static Node getNextNode(Stack<Node> nodes, Node targetNode) {
         Iterator<Node> nodesIterator = nodes.listIterator();
-        while(nodesIterator.hasNext()){
+        while (nodesIterator.hasNext()) {
             Node node = nodesIterator.next();
-            if(node == targetNode){
+            if (node == targetNode) {
                 return nodesIterator.next();
             }
         }
         return null;
     }
-    
+
     //Counts the number of parents couting +1 if child Node is right and -1 if child Node is left
-    public static int getNumberOfParents(List<Node> nodes, Node actual){
-        int numberOfParents=0;
+    public static int getNumberOfParents(List<Node> nodes, Node actual) {
+        int numberOfParents = 0;
         Iterator<Node> nodesIterator = nodes.listIterator();
-        while(nodesIterator.hasNext()){
+        while (nodesIterator.hasNext()) {
             Node node = nodesIterator.next();
-            if(node.getLeft() != null && node.getLeft().equals(actual)){
+            if (node.getLeft() != null && node.getLeft().equals(actual)) {
                 numberOfParents--;
-            } 
-            if(node.getRight()!= null && node.getRight().equals(actual)){
+            }
+            if (node.getRight() != null && node.getRight().equals(actual)) {
                 numberOfParents++;
             }
         }

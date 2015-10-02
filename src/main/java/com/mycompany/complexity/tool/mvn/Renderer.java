@@ -47,6 +47,7 @@ public class Renderer {
         this.parser = parser;
         lastEdgeId = 0;
 //        g.addVertex(1);
+        g.addVertex(parser.getRoot());
         constructGraph(parser.getRoot());
     }
 
