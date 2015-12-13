@@ -136,7 +136,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
         this.size = new Dimension(lastDimensionX(), lastDimensionY());
     }
 
-    protected int buildTree(V v, int x, int distance, boolean parentIf) {
+    protected int buildTree(V v, int x, int distance, boolean conditionalParent) {
         int initialDistance = 0;
         if (!alreadyDone.contains(v)) {
             alreadyDone.add(v);
@@ -177,7 +177,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
                     || (actualNode.getType() == NodeType.LOOP_EXIT)) {
                 this.m_currentPoint.y -= this.distY;
             }
-            if (parentIf) {
+            if (conditionalParent) {
                 initialDistance -= this.distX;
             }
             this.m_currentPoint.y -= this.distY;
