@@ -14,8 +14,8 @@ import com.github.javaparser.ast.stmt.Statement;
  */
 public class DoNode extends Node{
     private Node rootNode;
-     public DoNode(int id, NodeType type,Statement statement) {
-        super(id, type, statement);
+     public DoNode(int id, NodeType type,Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
 
     public Node getRootNode() {

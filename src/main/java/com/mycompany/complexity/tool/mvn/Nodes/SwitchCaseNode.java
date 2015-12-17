@@ -13,8 +13,8 @@ import com.github.javaparser.ast.stmt.SwitchEntryStmt;
  * @author helenocampos
  */
 public class SwitchCaseNode extends Node{
-    public SwitchCaseNode(int id, NodeType type,Statement statement) {
-        super(id, type, statement);
+    public SwitchCaseNode(int id, NodeType type,Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
       public String getPredicateText(){
           SwitchEntryStmt casestmt = (SwitchEntryStmt)getBaseStatement();

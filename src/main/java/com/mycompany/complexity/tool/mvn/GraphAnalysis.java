@@ -5,7 +5,9 @@
  */
 package com.mycompany.complexity.tool.mvn;
 
+import com.mycompany.complexity.tool.mvn.Nodes.Edge;
 import com.mycompany.complexity.tool.mvn.Nodes.Node;
+import edu.uci.ics.jung.graph.Tree;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Stack;
@@ -19,6 +21,7 @@ public class GraphAnalysis {
     private Node graphRoot;
     private Node graphExit;
     private LinkedList<Path> paths;
+
 
     public GraphAnalysis(Node root, Node exit) {
         this.graphRoot = root;
@@ -56,6 +59,8 @@ public class GraphAnalysis {
             paths.add(new Path(id++, derivatedPathNodes));
             lastPathNodes = derivatedPathNodes;
         }
+        
+
     }
 
     private Stack<Node> copyPathUntilNode(Stack<Node> basePath, Node starterNode, Node lastNode) {
@@ -170,4 +175,5 @@ public class GraphAnalysis {
     public LinkedList<Path> getPaths() {
         return this.paths;
     }
+
 }

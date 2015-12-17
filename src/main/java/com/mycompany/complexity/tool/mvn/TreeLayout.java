@@ -10,6 +10,7 @@
 package com.mycompany.complexity.tool.mvn;
 
 import com.mycompany.complexity.tool.mvn.Nodes.Node;
+import com.mycompany.complexity.tool.mvn.Nodes.Node.NodeType;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -46,10 +47,10 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
     protected Map<V, Point2D> locations
             = LazyMap.decorate(new HashMap<V, Point2D>(),
                     new Transformer<V, Point2D>() {
-                        public Point2D transform(V arg0) {
-                            return new Point2D.Double();
-                        }
-                    });
+                public Point2D transform(V arg0) {
+                    return new Point2D.Double();
+                }
+            });
 
     protected transient Set<V> alreadyDone = new HashSet<V>();
     protected transient Set<V> alreadyCalculated = new HashSet<V>();
@@ -60,7 +61,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
     /**
      * The default horizontal vertex spacing. Initialized to 50.
      */
-    public static int DEFAULT_DISTX = 100;
+    public static int DEFAULT_DISTX = 50;
 
     /**
      * The default vertical vertex spacing. Initialized to 50.
@@ -109,7 +110,7 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
         this.distX = distx;
         this.distY = disty;
         this.nodeList = list;
-        this.size = new Dimension(100 * list.size(), 600);
+        this.size = new Dimension(list.size() * 50, 600);
         this.maxHeight = calculateDimensionY(TreeUtils.getRoots(graph)) / 4;
         buildTree();
     }
@@ -126,72 +127,62 @@ public class TreeLayout<V extends Comparable, E> implements Layout<V, E> {
         int maxNumberOfParents = 0;
         Collection<V> roots = TreeUtils.getRoots(graph);
         if (roots.size() > 0 && graph != null) {
-            calculateDimensionX(roots);
-            V firstV = null;
-            for (V v : graph.getVertices()) {
-                int temp = graph.inDegree(v);
-                if (temp > maxNumberOfParents) {
-                    maxNumberOfParents = temp;
-                }
-            }
             for (V v : roots) {
                 calculateDimensionX(v);
-                if (firstV == null) {
-                    firstV = v;
-                }
                 //m_currentPoint.x += this.basePositions.get(v) / 2 + this.distX;
-                buildTree(v, null, firstV, this.m_currentPoint.x, maxNumberOfParents);
+                buildTree(v, this.m_currentPoint.x, maxNumberOfParents, false);
             }
         }
         this.size = new Dimension(lastDimensionX(), lastDimensionY());
     }
 
-    protected void buildTree(V v, V previousV, V firstV, int x, int max) {
+    protected int buildTree(V v, int x, int distance, boolean conditionalParent) {
+        int initialDistance = 0;
         if (!alreadyDone.contains(v)) {
-            int numberOfParents;
-            double distancePercent;
             alreadyDone.add(v);
-            //go one level further down
+
             Node actualNode = null;
             actualNode = (Node) v;
-            if (nodeList.size() == actualNode.getId()) {
-                this.m_currentPoint.y = this.m_currentPoint.y + maxHeight;
-            } else {
-                this.m_currentPoint.y = this.m_currentPoint.y + this.distY;
-            }
-            if (previousV != null) {
-                numberOfParents = Node.getNumberOfParents(nodeList, Node.getNode(nodeList, actualNode.getId()));
-                distancePercent = (double) numberOfParents / max;
-                if (distancePercent > 0) {
-                    this.m_currentPoint.x = (int) (locations.get(previousV).getX() + ((size.width - locations.get(previousV).getX()) * distancePercent));
+
+            this.m_currentPoint.y += this.distY;
+
+            if ((actualNode.getType() == NodeType.IF)
+                    || (actualNode.getType() == NodeType.CASE)) {
+                if (actualNode.getLeft() != null && actualNode.getRight() != null) {
+                    initialDistance += buildTree((V) actualNode.getLeft(), x - this.distX, initialDistance + this.distX, true);
+                    initialDistance += buildTree((V) actualNode.getRight(), x + this.distX, initialDistance + this.distX, true);
+                } else if (actualNode.getLeft() != null && actualNode.getRight() == null) {
+                    initialDistance += buildTree((V) actualNode.getLeft(), x, initialDistance + this.distX, true);
                 } else {
-                    this.m_currentPoint.x = (int) (locations.get(previousV).getX() + ((locations.get(previousV).getX()) * distancePercent));
+                    initialDistance += buildTree((V) actualNode.getRight(), x, initialDistance + this.distX, true);
                 }
-            }
-
-            this.setCurrentPositionFor(v);
-
-            int sizeXofCurrent = basePositions.get(v);
-
-            int lastX = x - sizeXofCurrent / 2;
-
-            int sizeXofChild;
-            int startXofChild;
-//            Collection<V> sucessors = graph.getSuccessors(v);
-//            List<V> sucessorsList = new ArrayList<>(sucessors);
-//            Collections.sort(sucessorsList);
-            for (V element : getOrderedSucessors(v)) {
-                sizeXofChild = this.basePositions.get(element);
-                startXofChild = lastX + sizeXofChild / 2;
-                buildTree(element, v, firstV, startXofChild, max);
-                lastX = lastX + sizeXofChild + distX;
-            }
-            if (nodeList.size() == actualNode.getId()) {
-                this.m_currentPoint.y -= maxHeight;
+            } else if ((actualNode.getType() == NodeType.FOR)
+                    || (actualNode.getType() == NodeType.FOREACH)
+                    || (actualNode.getType() == NodeType.WHILE)
+                    || (actualNode.getType() == NodeType.CASE_BLOCK)
+                    || (actualNode.getType() == NodeType.BLOCK)) {
+                initialDistance += buildTree((V) actualNode.getLeft(), x, initialDistance, false);
+                if (actualNode.getRight() != null) {
+                    initialDistance += buildTree((V) actualNode.getRight(), x + distX, initialDistance + this.distX, false);
+                }
+            } else if ((actualNode.getType() == NodeType.EXIT)
+                    || (actualNode.getType() == NodeType.LOOP_EXIT)) {
+                this.m_currentPoint.y += this.distY;
             } else {
+                System.err.println("Erros! Milhões de erros");
+            }
+            this.m_currentPoint.x = x - initialDistance;
+            setCurrentPositionFor(v);
+            if ((actualNode.getType() == NodeType.EXIT)
+                    || (actualNode.getType() == NodeType.LOOP_EXIT)) {
                 this.m_currentPoint.y -= this.distY;
             }
+            if (conditionalParent) {
+                initialDistance -= this.distX;
+            }
+            this.m_currentPoint.y -= this.distY;
         }
+        return initialDistance;
     }
 
     private int calculateDimensionX(V v) {

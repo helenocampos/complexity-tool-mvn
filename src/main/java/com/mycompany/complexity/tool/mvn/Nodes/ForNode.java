@@ -16,8 +16,8 @@ public class ForNode extends LoopNode {
 
     private ForStmt forstmt;
 
-    public ForNode(int id, Node.NodeType type, Statement statement) {
-        super(id, type, statement);
+    public ForNode(int id, Node.NodeType type, Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
 
     /**

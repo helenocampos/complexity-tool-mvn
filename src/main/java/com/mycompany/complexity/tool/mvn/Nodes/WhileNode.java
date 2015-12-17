@@ -16,8 +16,8 @@ public class WhileNode extends LoopNode {
 
     
     
-    public WhileNode(int id, Node.NodeType type, Statement statement) {
-        super(id, type, statement);
+    public WhileNode(int id, Node.NodeType type, Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
 
     public String getPredicateText() {

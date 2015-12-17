@@ -16,8 +16,8 @@ public class ForEachNode extends LoopNode {
 
     private ForeachStmt forstmt;
     
-    public ForEachNode(int id, Node.NodeType type, Statement statement) {
-        super(id, type, statement);
+    public ForEachNode(int id, Node.NodeType type, Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
 
     /**

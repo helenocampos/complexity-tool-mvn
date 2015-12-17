@@ -8,6 +8,7 @@ package com.mycompany.complexity.tool.mvn.Nodes;
 import com.github.javaparser.ast.stmt.Statement;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
@@ -15,7 +16,7 @@ import java.util.Stack;
  *
  * @author helenocampos
  */
-public class Node implements Comparable {
+public class Node implements Comparable<Node> {
 
     private int id;
     private Node left;
@@ -27,7 +28,8 @@ public class Node implements Comparable {
     private Node parent;
     private boolean locked = false;
     private Statement baseStatement;
-
+    private int degree = 0;
+    
     /**
      * @return the locked
      */
@@ -67,7 +69,7 @@ public class Node implements Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
+    public int compareTo(Node o) {
         if (o instanceof Node) {
             Node node = (Node) o;
             if (this.id > node.getId()) {
@@ -93,10 +95,11 @@ public class Node implements Comparable {
         EXIT;
     }
 
-    public Node(int id, NodeType type, Statement stmt) {
+    public Node(int id, NodeType type, Statement stmt, int degree) {
         this.id = id;
         this.type = type;
         this.baseStatement = stmt;
+        this.degree = degree;
     }
 
     public Node() {
@@ -252,6 +255,50 @@ public class Node implements Comparable {
             }
         }
         return numberOfParents;
+    }
+
+    public static List<Node> resetNodesRenderingStates(List<Node> nodes) {
+        for (Node node : nodes) {
+            if (node.isLocked()) {
+                node.setLocked(false);
+            }
+
+            if (node.isRendered()) {
+                node.setRendered(false);
+            }
+        }
+        return nodes;
+    }
+
+    public static List<Node> getIncidentNodes(List<Node> nodes, Node node) {
+        List<Node> incidentNodes = new LinkedList<>();
+        for (Node actualNode : nodes) {
+            if (!actualNode.equals(node)) {
+                if (actualNode.getLeft() != null && actualNode.getLeft().equals(node)) {
+                    if (!incidentNodes.contains(actualNode)) {
+                        incidentNodes.add(actualNode);
+                    }
+                }
+                if (actualNode.getRight() != null && actualNode.getRight().equals(node)) {
+                    if (!incidentNodes.contains(actualNode)) {
+                        incidentNodes.add(actualNode);
+                    }
+                }
+            }
+        }
+        return incidentNodes;
+    }
+
+    public int getDegree() {
+        return degree;
+    }
+
+    public void setDegree(int degree) {
+        this.degree = degree;
+    }
+
+    public void increaseDegree() {
+        this.degree++;
     }
 
 }

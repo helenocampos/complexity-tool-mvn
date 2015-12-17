@@ -15,8 +15,8 @@ public abstract class LoopNode extends Node{
 
     private Node exitNode;
 
-    public LoopNode(int id, NodeType nodeType, Statement statement){
-        super(id, nodeType, statement);
+    public LoopNode(int id, NodeType nodeType, Statement statement, int degree){
+        super(id, nodeType, statement, degree);
     }
     
     public Node getExitNode() {

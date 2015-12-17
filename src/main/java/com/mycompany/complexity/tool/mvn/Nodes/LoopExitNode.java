@@ -14,8 +14,8 @@ import com.github.javaparser.ast.stmt.Statement;
 public class LoopExitNode extends Node{
     private Node loopNode;
 
-    public LoopExitNode(int id, Node.NodeType type, Statement statement) {
-        super(id, type, statement);
+    public LoopExitNode(int id, Node.NodeType type, Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
     
     public LoopExitNode(int id, Node loopNode){

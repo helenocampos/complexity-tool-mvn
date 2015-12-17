@@ -45,6 +45,7 @@ import com.mycompany.complexity.tool.mvn.refactorer.IfRefactorContainer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
@@ -60,6 +61,7 @@ public class Parser {
     private Node lastSwitchCase;
     private Node exitNode;
     private int lastNodeId;
+    private int nodeDegree = 0;
     private Stack<IfStmt> conditionsNextMarkers;
     private ArrayList<IfNode> ifSimpleConditions;
     private ArrayList<IfStmt> checkedIfStmts;
@@ -69,7 +71,8 @@ public class Parser {
     private Stack<Node> breakScope;
     private Stack<Node> futureConnections;
     private Stack<Node> returnNodes;
-
+    private LinkedList<Node> conditionals;
+    
 //    private boolean lockNewNodes;
     private boolean mockParser;
 
@@ -93,6 +96,7 @@ public class Parser {
         breakScope = new Stack<>();
         futureConnections = new Stack<>();
         returnNodes = new Stack<>();
+        conditionals = new LinkedList<>();
     }
 
     public void parseManager(Statement stmt, int stmtCount) {
@@ -306,7 +310,7 @@ public class Parser {
                         break;
                 }
             }
-
+            
             actualNode.setParent(parent);
             checkLateralLink(actualNode);
         }
@@ -467,34 +471,34 @@ public class Parser {
 
         switch (type) {
             case IF:
-                node = new IfNode(++lastNodeId, Node.NodeType.IF, stmt);
+                node = new IfNode(++lastNodeId, Node.NodeType.IF, stmt, nodeDegree);
                 break;
             case BLOCK:
-                node = new BlockNode(++lastNodeId, Node.NodeType.BLOCK, stmt);
+                node = new BlockNode(++lastNodeId, Node.NodeType.BLOCK, stmt, nodeDegree+1);
                 break;
 
             case CASE:
-                node = new SwitchCaseNode(++lastNodeId, Node.NodeType.CASE, stmt);
+                node = new SwitchCaseNode(++lastNodeId, Node.NodeType.CASE, stmt, nodeDegree);
                 break;
 
             case FOR:
-                node = new ForNode(++lastNodeId, Node.NodeType.FOR, stmt);
+                node = new ForNode(++lastNodeId, Node.NodeType.FOR, stmt, nodeDegree);
                 break;
 
             case FOREACH:
-                node = new ForEachNode(++lastNodeId, Node.NodeType.FOREACH, stmt);
+                node = new ForEachNode(++lastNodeId, Node.NodeType.FOREACH, stmt, nodeDegree);
                 break;
 
             case WHILE:
-                node = new WhileNode(++lastNodeId, Node.NodeType.WHILE, stmt);
+                node = new WhileNode(++lastNodeId, Node.NodeType.WHILE, stmt, nodeDegree);
                 break;
 
             case DO:
-                node = new DoNode(++lastNodeId, Node.NodeType.DO, stmt);
+                node = new DoNode(++lastNodeId, Node.NodeType.DO, stmt, nodeDegree);
                 break;
 
             case EXIT:
-                node = new Node(++lastNodeId, Node.NodeType.EXIT, null);
+                node = new Node(++lastNodeId, Node.NodeType.EXIT, null, nodeDegree);
                 break;
 
         }
@@ -541,9 +545,9 @@ public class Parser {
             return node;
         }
         if (id == 0) {
-            node = new IfNode(++lastNodeId, Node.NodeType.IF, stmt);
+            node = new IfNode(++lastNodeId, Node.NodeType.IF, stmt, nodeDegree);
         } else {
-            node = new IfNode(id, Node.NodeType.IF, stmt);
+            node = new IfNode(id, Node.NodeType.IF, stmt, nodeDegree);
             ++lastNodeId;
 
         }
@@ -582,7 +586,7 @@ public class Parser {
         ifstmt = preParseCondition(ifstmt);
 
         IfNode node = (IfNode) instanciateIfNode(ifstmt, ifstmt.getCondition(), 0);
-
+        node.setDegree(++nodeDegree);
         System.out.println(ifstmt.getCondition().toString() + " " + node.getId());
         if (ifstmt.getThenStmt() != null) {
             parse(ifstmt.getThenStmt(), node, "left");
@@ -593,7 +597,10 @@ public class Parser {
             parse(ifstmt.getElseStmt(), node, "right");
 
         }
-
+        if(!conditionals.contains(node)){
+            conditionals.add(node);
+        }
+        nodeDegree--;
         return node;
     }
 
@@ -711,7 +718,7 @@ public class Parser {
     private int instanciateNodeForSimpleCondition(int id, Expression condition) {
         IfNode node = (IfNode) getNodeByStatementOrCondition(null, condition);
         if (node == null) {
-            node = new IfNode(++id, Node.NodeType.IF, null);
+            node = new IfNode(++id, Node.NodeType.IF, null, nodeDegree);
             node.setCondition(condition);
         }
         ifSimpleConditions.add(node);
@@ -795,6 +802,7 @@ public class Parser {
             //no inner node has been created, create a node to represent the whole block
             BreakNode breakNode = (BreakNode) rootBlockNode;
             rootBlockNode = (BlockNode) instanciateNode(Node.NodeType.BLOCK, blockstmt);
+            rootBlockNode.setDegree(nodeDegree+1);
             if (breakNode != null) {
                 breakNodes.push(rootBlockNode);
             }
@@ -1084,6 +1092,20 @@ public class Parser {
 
     public void setExitNode(Node exitNode) {
         this.exitNode = exitNode;
+    }
+    
+    /**
+     * @return the conditionals
+     */
+    public LinkedList<Node> getConditionals() {
+        return conditionals;
+    }
+
+    /**
+     * @param conditionals the conditionals to set
+     */
+    public void setConditionals(LinkedList<Node> conditionals) {
+        this.conditionals = conditionals;
     }
 
 }

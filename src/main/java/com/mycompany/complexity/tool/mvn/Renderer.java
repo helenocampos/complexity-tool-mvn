@@ -11,6 +11,7 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.CrossoverScalingControl;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
+import edu.uci.ics.jung.visualization.control.ScalingControl;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.picking.PickedState;
@@ -42,12 +43,20 @@ public class Renderer {
     private Tree<Node, Edge> g = new DelegateTree<>();
     private VisualizationViewer<Node, Edge> vv;
     private Node selectedNode;
+    final ScalingControl scaler = new CrossoverScalingControl();
 
     public Renderer(Parser parser) {
         this.parser = parser;
         lastEdgeId = 0;
 //        g.addVertex(1);
         g.addVertex(parser.getRoot());
+        constructGraph(parser.getRoot());
+    }
+    
+    public Renderer(Parser parser, Tree<Node, Edge> graph) {
+        this.parser = parser;
+        lastEdgeId = 0;
+        this.g = graph;
         constructGraph(parser.getRoot());
     }
 
@@ -58,12 +67,12 @@ public class Renderer {
 
             if (actualNode.getLeft() != null) {
                 Edge edge = new Edge(lastEdgeId++, actualNode, actualNode.getLeft());
-                g.addEdge(edge, actualNode, actualNode.getLeft(), EdgeType.DIRECTED);
+                getG().addEdge(edge, actualNode, actualNode.getLeft(), EdgeType.DIRECTED);
             }
 
             if (actualNode.getRight() != null) {
                 Edge edge = new Edge(lastEdgeId++, actualNode, actualNode.getRight());
-                g.addEdge(edge, actualNode, actualNode.getRight(), EdgeType.DIRECTED);
+                getG().addEdge(edge, actualNode, actualNode.getRight(), EdgeType.DIRECTED);
 
             }
 
@@ -85,11 +94,11 @@ public class Renderer {
 
     public VisualizationViewer<Node, Edge> renderGraph(final JTextArea codeArea, final JTextArea statementDisplayArea, final MethodDeclaration method) {
         Layout<Node, Edge> layout;
-        if (parser.getNodes().size() > 15) {
-            layout = new TreeLayoutDois(g);
-        } else {
-            layout = new TreeLayout(g, parser.getNodes());
-        }
+//        if (parser.getNodes().size() > 15) {
+//            layout = new TreeLayoutDois(getG());
+//        } else {
+            layout = new TreeLayout(getG(), parser.getNodes());
+//        }
 
         vv = new VisualizationViewer<Node, Edge>(layout);
 
@@ -101,7 +110,7 @@ public class Renderer {
         gm.setMode(ModalGraphMouse.Mode.TRANSFORMING);
 
         vv.setGraphMouse(gm);
-        
+        vv.scaleToLayout(scaler);
         vv.addKeyListener(gm.getModeKeyListener());
 
         final PickedState<Node> pickedState = vv.getPickedVertexState();
@@ -144,6 +153,23 @@ public class Renderer {
                 }
             }
         });
+        
+        vv.getRenderContext().setEdgeLabelTransformer(new Transformer<Edge, String>() {
+                public String transform(Edge e) {
+                    if(e.getSourceNode().getType().equals(Node.NodeType.IF)){
+                        IfNode ifNode = (IfNode) e.getSourceNode();
+                        if(ifNode.hasElse() && ifNode.getRight().equals(e.getDestinationNode())){
+                            return "else";
+                        }else{
+                            if(ifNode.getLeft().equals(e.getDestinationNode())){
+                                return "then";
+                            }
+                        }
+                        
+                    }
+                    return "";
+                }
+            });
 
         return vv;
     }
@@ -233,4 +259,35 @@ public class Renderer {
         return this.selectedNode;
     }
 
+    /**
+     * @return the g
+     */
+    public Tree<Node, Edge> getG() {
+        return g;
+    }
+
+    /**
+     * @param g the g to set
+     */
+    public void setG(Tree<Node, Edge> g) {
+        this.g = g;
+    }
+    
+    public void setMoveMode(){
+        DefaultModalGraphMouse mouse = (DefaultModalGraphMouse) vv.getGraphMouse();
+        mouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
+    }
+    
+    public void setSelectingMode(){
+        DefaultModalGraphMouse mouse = (DefaultModalGraphMouse) vv.getGraphMouse();
+        mouse.setMode(ModalGraphMouse.Mode.PICKING);
+    }
+    
+    public void zoomIn(){
+        scaler.scale(vv, 1.1f, vv.getCenter());
+    }
+    
+    public void zoomOut(){
+        scaler.scale(vv, 1/1.1f, vv.getCenter());
+    }
 }

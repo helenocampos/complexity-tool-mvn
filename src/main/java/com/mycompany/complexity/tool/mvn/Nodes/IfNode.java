@@ -16,9 +16,9 @@ public class IfNode extends Node {
 
     private boolean hasElse = false;
     private Expression condition;
-
-    public IfNode(int id, NodeType type, Statement statement) {
-        super(id, type, statement);
+    
+    public IfNode(int id, NodeType type, Statement statement, int degree) {
+        super(id, type, statement, degree);
     }
 
     public IfNode() {
@@ -44,7 +44,8 @@ public class IfNode extends Node {
     @Override
     public String toString() {
         if(condition!=null){
-            return "nodeId: " + getId() + " " + condition.toString();
+//            return "nodeId: " + getId() + " " + condition.toString();
+            return "if ( "+condition.toString()+" )";
         }else{
             return super.toString();
         }
