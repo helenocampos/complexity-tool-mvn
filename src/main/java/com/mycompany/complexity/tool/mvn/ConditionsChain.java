@@ -72,16 +72,29 @@ public class ConditionsChain {
             return node;
         }
     }
-    
+
+    /*
+        Checks if the last condition in the cluster has an if to the right
+        If true, the cluster isn't valid. There can't be transformations in the middle of a chain
+    */
+    public boolean checkConsistency() {
+        Node lastNode = conditions.get(conditions.size()-1);
+        if(lastNode.getRight()!=null){
+            if(lastNode.getRight().getType().equals(Node.NodeType.IF)){
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
-    public String toString(){
-        String conditions ="";
-        if(this.conditions!=null){
-            
-            for(Node node: this.conditions){
-                if(node instanceof IfNode){
-                    IfNode ifNode = (IfNode) node;
-                    conditions+=node.getPredicateText()+" ;";
+    public String toString() {
+        String conditions = "";
+        if (this.conditions != null) {
+
+            for (Node node : this.conditions) {
+                if (node instanceof IfNode) {
+                    conditions += node.getPredicateText() + " ;";
                 }
             }
         }

@@ -604,9 +604,9 @@ public class Parser {
         return node;
     }
 
-    private void processOriginalNodes(IfStmt ifstmt) {
+    private void processOriginalNodes(IfStmt ifstmt, IfStmt createdIf) {
         ifSimpleConditions.clear();
-        traverseConditionTree(ifstmt.getCondition(), lastNodeId);
+        traverseConditionTree(ifstmt.getCondition(), lastNodeId, createdIf);
         processIfSimpleConditions(ifSimpleConditions);
         Parser mockParserObj = new Parser(true);
         mockParserObj.lastNodeId = lastNodeId;
@@ -620,11 +620,11 @@ public class Parser {
             instanciateIfNode(node.getBaseStatement(), node.getCondition(), node.getId());
         }
     }
-
+    
     private IfStmt preParseCondition(IfStmt ifstmt) {
 //        if (ifstmt.getCondition().getClass().equals(BinaryExpr.class) && !isMockParser()) {
-        if (ifstmt.getCondition().getClass().equals(BinaryExpr.class)) {
-            BinaryExpr condition = (BinaryExpr) ifstmt.getCondition();
+        BinaryExpr condition = ConditionRefactorer.getBinaryCondition(ifstmt.getCondition());
+        if (condition!=null) {
             if (!ConditionRefactorer.isSimpleCondition(condition)) {
                 IfStmt ifstmtHash = refactoredIfStmts.get(ifstmt);
                 if (ifstmtHash != null) {
@@ -646,7 +646,7 @@ public class Parser {
                     System.out.println(" ----------  ");
                     System.out.println("");
                     if (!isMockParser()) {
-                        processOriginalNodes(ifstmt);
+                        processOriginalNodes(ifstmt,container.getCreatedIf());
                     }
 
                     refactoredIfStmts.put(ifstmt, container.getCreatedIf());
@@ -687,38 +687,37 @@ public class Parser {
 
     //add the simple conditions of an expression to the ifSimpleConditions list
     //return the id of the last condition added (represents the id of the created node)
-    private int traverseConditionTree(Expression condition, int id) {
-
-        if (condition.getClass().equals(BinaryExpr.class)) {
-            BinaryExpr binaryCondition = (BinaryExpr) condition;
+    private int traverseConditionTree(Expression condition, int id, IfStmt createdIf) {
+        BinaryExpr binaryCondition = ConditionRefactorer.getBinaryCondition(condition);
+        if (binaryCondition!=null) {
             if (ConditionRefactorer.isSimpleCondition(binaryCondition)) {
-                id = instanciateNodeForSimpleCondition(id, condition);
+                id = instanciateNodeForSimpleCondition(id, condition, createdIf);
             } else {
                 if (binaryCondition.getLeft() != null) {
-                    id = traverseConditionTree(binaryCondition.getLeft(), id);
+                    id = traverseConditionTree(binaryCondition.getLeft(), id, createdIf);
                 }
 
                 if (binaryCondition.getRight() != null) {
-                    id = traverseConditionTree(binaryCondition.getRight(), id);
+                    id = traverseConditionTree(binaryCondition.getRight(), id, createdIf);
                 }
             }
 
         } else if (condition.getClass().equals(EnclosedExpr.class)) {
             EnclosedExpr enclosedCondition = (EnclosedExpr) condition;
-            id = traverseConditionTree(enclosedCondition.getInner(), id);
+            id = traverseConditionTree(enclosedCondition.getInner(), id, createdIf);
         } else if (condition.getClass().equals(MethodCallExpr.class)
                 || condition.getClass().equals(UnaryExpr.class)) {
-            id = instanciateNodeForSimpleCondition(id, condition);
+            id = instanciateNodeForSimpleCondition(id, condition, createdIf);
         }
 
         return id;
 
     }
 
-    private int instanciateNodeForSimpleCondition(int id, Expression condition) {
-        IfNode node = (IfNode) getNodeByStatementOrCondition(null, condition);
+    private int instanciateNodeForSimpleCondition(int id, Expression condition, IfStmt createdIf) {
+        IfNode node = (IfNode) getNodeByStatementOrCondition(createdIf, condition);
         if (node == null) {
-            node = new IfNode(++id, Node.NodeType.IF, null, nodeDegree);
+            node = new IfNode(++id, Node.NodeType.IF, createdIf, nodeDegree);
             node.setCondition(condition);
         }
         ifSimpleConditions.add(node);

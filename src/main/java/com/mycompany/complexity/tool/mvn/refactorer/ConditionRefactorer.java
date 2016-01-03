@@ -440,6 +440,21 @@ public class ConditionRefactorer {
         }
         return found;
     }
+    
+    public static BinaryExpr getBinaryCondition(Expression condition) {
+        BinaryExpr conditionExpression = null;
+        if (condition instanceof BinaryExpr) {
+            conditionExpression = (BinaryExpr) condition;
+        } else {
+            if (condition instanceof EnclosedExpr) {
+                EnclosedExpr enclosedExpr = (EnclosedExpr) condition;
+                if (enclosedExpr.getInner() instanceof BinaryExpr) {
+                    conditionExpression = (BinaryExpr) enclosedExpr.getInner();
+                }
+            }
+        }
+        return conditionExpression;
+    }
 
     private IfStmt parseOrCondition(BinaryExpr condition) {
         IfRefactorContainer left = parseCondition(condition.getLeft());

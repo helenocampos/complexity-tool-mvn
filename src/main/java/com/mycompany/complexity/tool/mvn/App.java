@@ -40,7 +40,7 @@ public class App {
         Parser secondaryParser = new Parser(false);
         Scanner secondaryScanner = new Scanner(secondaryParser);
         secondaryScanner.scanMethod(n);
-        setOptimizingSugestions(PatternAnalysis.analize(secondaryParser.getConditionals(),secondaryParser.getNodes()));
+        setOptimizingSugestions(PatternAnalysis.analize(secondaryParser.getConditionals(),secondaryParser.getNodes(), scanner.getVariablesTable()));
         Node.resetNodesRenderingStates(secondaryParser.getNodes());
         optimizedRenderer = new Renderer(secondaryParser);
         optimizedRenderer.renderGraph(codeArea, statementArea, n);
