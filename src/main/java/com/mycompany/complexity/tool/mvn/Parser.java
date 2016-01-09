@@ -538,9 +538,14 @@ public class Parser {
         return null;
     }
 
-    private Node instanciateIfNode(Statement stmt, Expression condition, int id) {
+    private Node instanciateIfNode(Statement stmt, Expression condition, int id, boolean considerStatement) {
         Node node = null;
-        node = getNodeByStatementOrCondition(stmt, condition);
+        if(considerStatement){
+            node = getNodeByStatementOrCondition(stmt, condition);
+        }else{
+            node = getNodeByCondition(condition);
+        }
+        
         if (node != null) {
             return node;
         }
@@ -562,6 +567,20 @@ public class Parser {
         return node;
     }
 
+    private Node getNodeByCondition(Expression condition) {
+        for (Node node : nodes) {
+            if (node.getClass().equals(IfNode.class)) {
+                IfNode ifnode = (IfNode) node;
+                if (ifnode.getCondition() != null) {
+                    if (ifnode.getCondition() == condition) {
+                        return ifnode;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
     private Node getNodeByStatementOrCondition(Statement statement, Expression condition) {
         for (Node node : nodes) {
             if (node.getClass().equals(IfNode.class)) {
@@ -585,7 +604,7 @@ public class Parser {
 
         ifstmt = preParseCondition(ifstmt);
 
-        IfNode node = (IfNode) instanciateIfNode(ifstmt, ifstmt.getCondition(), 0);
+        IfNode node = (IfNode) instanciateIfNode(ifstmt, ifstmt.getCondition(), 0, true);
         node.setDegree(++nodeDegree);
         System.out.println(ifstmt.getCondition().toString() + " " + node.getId());
         if (ifstmt.getThenStmt() != null) {
@@ -617,7 +636,7 @@ public class Parser {
 
     private void processIfSimpleConditions(List<IfNode> conditions) {
         for (IfNode node : conditions) {
-            instanciateIfNode(node.getBaseStatement(), node.getCondition(), node.getId());
+            instanciateIfNode(node.getBaseStatement(), node.getCondition(), node.getId(), false);
         }
     }
     
