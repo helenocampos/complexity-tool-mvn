@@ -135,7 +135,7 @@ public abstract class PatternAnalysis {
      left has to be a NameExpr and the name must be equal
      the condition expression  right side's type is like the actual node's 
      */
-    private static boolean continueToRightNode(IfNode node) {
+    public static boolean continueToRightNode(IfNode node) {
         if (node.getRight() != null) {
             if (node.getRight().getType().equals(Node.NodeType.IF)) {
                 IfNode rightNode = (IfNode) node.getRight();

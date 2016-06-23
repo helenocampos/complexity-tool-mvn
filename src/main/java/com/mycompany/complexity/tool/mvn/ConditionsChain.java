@@ -74,13 +74,14 @@ public class ConditionsChain {
     }
 
     /*
-        Checks if the last condition in the cluster has an if to the right
-        If true, the cluster isn't valid. There can't be transformations in the middle of a chain
-    */
+     Checks if the last condition in the cluster has an if to the right
+     If true, the cluster isn't valid. There can't be transformations in the middle of a chain
+     */
     public boolean checkConsistency() {
-        Node lastNode = conditions.get(conditions.size()-1);
-        if(lastNode.getRight()!=null){
-            if(lastNode.getRight().getType().equals(Node.NodeType.IF)){
+        Node lastNode = conditions.get(conditions.size() - 1);
+        if (lastNode.getRight() != null) {
+            IfNode ifnode = (IfNode) lastNode;
+            if (PatternAnalysis.continueToRightNode(ifnode)) {
                 return false;
             }
         }
